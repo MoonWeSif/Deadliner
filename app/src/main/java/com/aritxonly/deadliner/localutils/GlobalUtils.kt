@@ -739,4 +739,55 @@ object GlobalUtils {
             excludedWeekdays
         )
     }
+
+    /**
+     * 计算从 start 到 end 的“有效工作时长”（排除指定星期几），精确到分钟。
+     * - `excludedWeekdays` 使用 java.time 的约定：周一=1, 周日=7。
+     * - 若开始时间不早于结束时间，返回 Duration.ZERO。
+     * - 若不排除任何星期几，直接返回两者差值。
+     */
+    fun calculateRemainingDurationExcludingWeekdays(
+        startTime: String,
+        endTime: String,
+        excludedWeekdays: Set<Int>
+    ): Duration {
+        val start = parseDateTime(startTime) ?: LocalDateTime.now()
+        val end = parseDateTime(endTime) ?: return Duration.ZERO
+
+        if (!start.isBefore(end)) return Duration.ZERO
+        if (excludedWeekdays.isEmpty()) return Duration.between(start, end)
+
+        var total = Duration.ZERO
+        var currentDate = start.toLocalDate()
+        val endDate = end.toLocalDate()
+
+        while (!currentDate.isAfter(endDate)) {
+            val dayOfWeek = currentDate.dayOfWeek.value
+            if (dayOfWeek !in excludedWeekdays) {
+                // 当天有效计算窗口 [windowStart, windowEnd)
+                val windowStart = if (currentDate == start.toLocalDate()) start else currentDate.atStartOfDay()
+                val windowEnd = if (currentDate == end.toLocalDate()) end else currentDate.plusDays(1).atStartOfDay()
+                if (windowEnd.isAfter(windowStart)) {
+                    total = total.plus(Duration.between(windowStart, windowEnd))
+                }
+            }
+            currentDate = currentDate.plusDays(1)
+        }
+
+        return total
+    }
+
+    /**
+     * 计算从“现在”到 endTime 的有效工作时长（排除指定星期几），精确到分钟。
+     */
+    fun calculateRemainingDurationFromNowExcludingWeekdays(
+        endTime: String,
+        excludedWeekdays: Set<Int>
+    ): Duration {
+        return calculateRemainingDurationExcludingWeekdays(
+            LocalDateTime.now().toString(),
+            endTime,
+            excludedWeekdays
+        )
+    }
 }

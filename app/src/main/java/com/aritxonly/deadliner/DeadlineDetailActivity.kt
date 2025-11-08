@@ -575,16 +575,15 @@ fun DeadlineDetailInfo(deadline: DDLItem, waterLevel: Float) {
     val totalRemainingDays = remainingDuration.toDays()
     val totalRemainingTimeText = if (remainingDuration.isNegative) stringResource(R.string.overdue) else formatDuration(context, remainingDuration)
     
-    // 计算排除特定星期几后的剩余时间
-    val excludedRemainingDays = if (deadline.excludedWeekdays.isNotEmpty()) {
-        GlobalUtils.calculateRemainingDaysFromNowExcludingWeekdays(deadline.endTime, deadline.excludedWeekdays)
-    } else {
-        totalRemainingDays
-    }
+    // 计算排除特定星期几后的“有效工作时间”（精确到分）
     val excludedRemainingTimeText = if (remainingDuration.isNegative) {
         stringResource(R.string.overdue)
     } else if (deadline.excludedWeekdays.isNotEmpty()) {
-        stringResource(R.string.days_format, excludedRemainingDays)
+        val excludedDuration = GlobalUtils.calculateRemainingDurationFromNowExcludingWeekdays(
+            deadline.endTime,
+            deadline.excludedWeekdays
+        )
+        formatDuration(context, excludedDuration)
     } else {
         totalRemainingTimeText
     }
