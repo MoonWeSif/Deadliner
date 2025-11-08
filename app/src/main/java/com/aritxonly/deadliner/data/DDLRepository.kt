@@ -35,9 +35,11 @@ class DDLRepository(
         endTime: String,
         note: String = "",
         type: DeadlineType = DeadlineType.TASK,
-        calendarEventId: Long? = null
+        calendarEventId: Long? = null,
+        excludedWeekdays: Set<Int> = emptySet()
     ): Long {
-        val id = db.insertDDL(name, startTime, endTime, note, type, calendarEventId)
+        val excludedWeekdaysStr = excludedWeekdays.joinToString(",")
+        val id = db.insertDDL(name, startTime, endTime, note, type, calendarEventId, excludedWeekdaysStr)
         sync.onLocalInserted(id)
         scheduleSync()
         return id

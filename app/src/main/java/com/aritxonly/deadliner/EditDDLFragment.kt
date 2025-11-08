@@ -54,6 +54,14 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
     private lateinit var totalTextInput: TextInputLayout
     private lateinit var totalEditText: EditText
     private lateinit var freqTypeHint: TextView
+    
+    private lateinit var chipMonday: com.google.android.material.chip.Chip
+    private lateinit var chipTuesday: com.google.android.material.chip.Chip
+    private lateinit var chipWednesday: com.google.android.material.chip.Chip
+    private lateinit var chipThursday: com.google.android.material.chip.Chip
+    private lateinit var chipFriday: com.google.android.material.chip.Chip
+    private lateinit var chipSaturday: com.google.android.material.chip.Chip
+    private lateinit var chipSunday: com.google.android.material.chip.Chip
 
     override fun onStart() {
         super.onStart()
@@ -95,6 +103,23 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
         totalTextInput = view.findViewById(R.id.totalTextInput)
         totalEditText = view.findViewById(R.id.totalEditText)
         freqTypeHint = view.findViewById(R.id.freqTypeHint)
+        
+        chipMonday = view.findViewById(R.id.chipMonday)
+        chipTuesday = view.findViewById(R.id.chipTuesday)
+        chipWednesday = view.findViewById(R.id.chipWednesday)
+        chipThursday = view.findViewById(R.id.chipThursday)
+        chipFriday = view.findViewById(R.id.chipFriday)
+        chipSaturday = view.findViewById(R.id.chipSaturday)
+        chipSunday = view.findViewById(R.id.chipSunday)
+        
+        // 设置已排除的星期几
+        chipMonday.isChecked = 1 in ddlItem.excludedWeekdays
+        chipTuesday.isChecked = 2 in ddlItem.excludedWeekdays
+        chipWednesday.isChecked = 3 in ddlItem.excludedWeekdays
+        chipThursday.isChecked = 4 in ddlItem.excludedWeekdays
+        chipFriday.isChecked = 5 in ddlItem.excludedWeekdays
+        chipSaturday.isChecked = 6 in ddlItem.excludedWeekdays
+        chipSunday.isChecked = 7 in ddlItem.excludedWeekdays
 
         ddlNameEditText.setText(ddlItem.name)
         startTimeContent.text = formatLocalDateTime(startTime)
@@ -154,6 +179,15 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
 
         // 保存按钮点击事件
         saveButton.setOnClickListener {
+            val excludedWeekdays = mutableSetOf<Int>()
+            if (chipMonday.isChecked) excludedWeekdays.add(1)
+            if (chipTuesday.isChecked) excludedWeekdays.add(2)
+            if (chipWednesday.isChecked) excludedWeekdays.add(3)
+            if (chipThursday.isChecked) excludedWeekdays.add(4)
+            if (chipFriday.isChecked) excludedWeekdays.add(5)
+            if (chipSaturday.isChecked) excludedWeekdays.add(6)
+            if (chipSunday.isChecked) excludedWeekdays.add(7)
+            
             when (ddlItem.type) {
                 DeadlineType.TASK -> {
                     val updatedDDL = ddlItem.copy(
@@ -161,7 +195,8 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
                         startTime = startTime.toString(),
                         endTime = endTime.toString(),
                         note = ddlNoteEditText.text.toString(),
-                        type = DeadlineType.TASK
+                        type = DeadlineType.TASK,
+                        excludedWeekdays = excludedWeekdays
                     )
                     onUpdate(updatedDDL)
                 }
@@ -188,7 +223,8 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
                             total = total ?: 0,
                             refreshDate = LocalDate.now().toString()
                         ).toJson(),
-                        type = DeadlineType.HABIT
+                        type = DeadlineType.HABIT,
+                        excludedWeekdays = excludedWeekdays
                     )
                     onUpdate(updatedDDL)
                 }

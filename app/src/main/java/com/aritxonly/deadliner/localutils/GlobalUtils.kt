@@ -699,4 +699,44 @@ object GlobalUtils {
             )
         )
     }
+
+    fun calculateRemainingDaysExcludingWeekdays(
+        startTime: String,
+        endTime: String,
+        excludedWeekdays: Set<Int>
+    ): Long {
+        if (excludedWeekdays.isEmpty()) {
+            val start = parseDateTime(startTime) ?: LocalDateTime.now()
+            val end = parseDateTime(endTime) ?: return 0
+            return Duration.between(start, end).toDays()
+        }
+
+        val start = parseDateTime(startTime) ?: LocalDateTime.now()
+        val end = parseDateTime(endTime) ?: return 0
+        
+        var currentDate = start.toLocalDate()
+        val endDate = end.toLocalDate()
+        var workingDays = 0L
+
+        while (!currentDate.isAfter(endDate)) {
+            val dayOfWeek = currentDate.dayOfWeek.value
+            if (dayOfWeek !in excludedWeekdays) {
+                workingDays++
+            }
+            currentDate = currentDate.plusDays(1)
+        }
+
+        return workingDays
+    }
+
+    fun calculateRemainingDaysFromNowExcludingWeekdays(
+        endTime: String,
+        excludedWeekdays: Set<Int>
+    ): Long {
+        return calculateRemainingDaysExcludingWeekdays(
+            LocalDateTime.now().toString(),
+            endTime,
+            excludedWeekdays
+        )
+    }
 }

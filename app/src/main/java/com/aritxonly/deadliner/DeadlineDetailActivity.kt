@@ -572,7 +572,23 @@ fun DeadlineDetailInfo(deadline: DDLItem, waterLevel: Float) {
     val now = LocalDateTime.now()
     // 计算剩余时间
     val remainingDuration = Duration.between(now, endTime)
-    val remainingTimeText = if (remainingDuration.isNegative) stringResource(R.string.overdue) else formatDuration(context, remainingDuration)
+    val totalRemainingDays = remainingDuration.toDays()
+    val totalRemainingTimeText = if (remainingDuration.isNegative) stringResource(R.string.overdue) else formatDuration(context, remainingDuration)
+    
+    // 计算排除特定星期几后的剩余时间
+    val excludedRemainingDays = if (deadline.excludedWeekdays.isNotEmpty()) {
+        GlobalUtils.calculateRemainingDaysFromNowExcludingWeekdays(deadline.endTime, deadline.excludedWeekdays)
+    } else {
+        totalRemainingDays
+    }
+    val excludedRemainingTimeText = if (remainingDuration.isNegative) {
+        stringResource(R.string.overdue)
+    } else if (deadline.excludedWeekdays.isNotEmpty()) {
+        stringResource(R.string.days_format, excludedRemainingDays)
+    } else {
+        totalRemainingTimeText
+    }
+    
     // 格式化日期显示
     val dateFormatter = DateTimeFormatter
         .ofLocalizedDateTime(FormatStyle.MEDIUM)
@@ -614,11 +630,24 @@ fun DeadlineDetailInfo(deadline: DDLItem, waterLevel: Float) {
             style = MaterialTheme.typography.bodyMedium,
             color = textColor
         )
-        Text(
-            text = stringResource(R.string.label_remaining_time, remainingTimeText),
-            style = MaterialTheme.typography.bodyMedium,
-            color = textColor
-        )
+        if (deadline.excludedWeekdays.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.label_total_remaining_time, totalRemainingTimeText),
+                style = MaterialTheme.typography.bodyMedium,
+                color = textColor
+            )
+            Text(
+                text = stringResource(R.string.label_remaining_time, excludedRemainingTimeText),
+                style = MaterialTheme.typography.bodyMedium,
+                color = textColor
+            )
+        } else {
+            Text(
+                text = stringResource(R.string.label_remaining_time, totalRemainingTimeText),
+                style = MaterialTheme.typography.bodyMedium,
+                color = textColor
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
         SelectionContainer {
             Text(text = deadline.note, style = MaterialTheme.typography.bodyMedium, color = textColor)

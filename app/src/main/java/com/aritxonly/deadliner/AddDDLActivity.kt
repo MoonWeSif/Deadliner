@@ -85,6 +85,14 @@ class AddDDLActivity : AppCompatActivity() {
     private lateinit var habitNoteHint: TextView
 
     private lateinit var importFromCalendarButton: ImageButton
+    
+    private lateinit var chipMonday: com.google.android.material.chip.Chip
+    private lateinit var chipTuesday: com.google.android.material.chip.Chip
+    private lateinit var chipWednesday: com.google.android.material.chip.Chip
+    private lateinit var chipThursday: com.google.android.material.chip.Chip
+    private lateinit var chipFriday: com.google.android.material.chip.Chip
+    private lateinit var chipSaturday: com.google.android.material.chip.Chip
+    private lateinit var chipSunday: com.google.android.material.chip.Chip
 
     private var calendarEventId: Long? = null
 
@@ -134,6 +142,14 @@ class AddDDLActivity : AppCompatActivity() {
         totalEditText = findViewById(R.id.totalEditText)
         freqTypeHint = findViewById(R.id.freqTypeHint)
         habitNoteHint = findViewById(R.id.habitNoteHint)
+        
+        chipMonday = findViewById(R.id.chipMonday)
+        chipTuesday = findViewById(R.id.chipTuesday)
+        chipWednesday = findViewById(R.id.chipWednesday)
+        chipThursday = findViewById(R.id.chipThursday)
+        chipFriday = findViewById(R.id.chipFriday)
+        chipSaturday = findViewById(R.id.chipSaturday)
+        chipSunday = findViewById(R.id.chipSunday)
 
         val startTimeContent: TextView = findViewById(R.id.startTimeContent)
         val endTimeContent: TextView = findViewById(R.id.endTimeContent)
@@ -264,6 +280,15 @@ class AddDDLActivity : AppCompatActivity() {
             R.id.btnYearly -> DeadlineFrequency.MONTHLY
             else -> DeadlineFrequency.TOTAL
         }
+        
+        val excludedWeekdays = mutableSetOf<Int>()
+        if (chipMonday.isChecked) excludedWeekdays.add(1)
+        if (chipTuesday.isChecked) excludedWeekdays.add(2)
+        if (chipWednesday.isChecked) excludedWeekdays.add(3)
+        if (chipThursday.isChecked) excludedWeekdays.add(4)
+        if (chipFriday.isChecked) excludedWeekdays.add(5)
+        if (chipSaturday.isChecked) excludedWeekdays.add(6)
+        if (chipSunday.isChecked) excludedWeekdays.add(7)
 
         if (ddlName.isNotBlank() && startTime != null) {
             if (selectedPage != 1) {
@@ -275,7 +300,8 @@ class AddDDLActivity : AppCompatActivity() {
                     startTime.toString(),
                     endTime.toString(),
                     ddlNote,
-                    calendarEventId = calendarEventId
+                    calendarEventId = calendarEventId,
+                    excludedWeekdays = excludedWeekdays
                 )
 
                 repo.getDDLById(ddlId)?.let { item ->
@@ -311,7 +337,8 @@ class AddDDLActivity : AppCompatActivity() {
                         total = total ?: 0,
                         refreshDate = LocalDate.now().toString()
                     ).toJson(),
-                    type = DeadlineType.HABIT
+                    type = DeadlineType.HABIT,
+                    excludedWeekdays = excludedWeekdays
                 )
                 Log.d("endTime", endTime.toString())
                 setResult(RESULT_OK)

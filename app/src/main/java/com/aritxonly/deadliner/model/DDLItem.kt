@@ -20,5 +20,6 @@ data class DDLItem(
     var habitCount: Int = 0,
     var habitTotalCount: Int = 0,
     var calendarEventId: Long? = null,
-    var timeStamp: String = LocalDateTime.now().toString()
+    var timeStamp: String = LocalDateTime.now().toString(),
+    var excludedWeekdays: Set<Int> = emptySet()
 ) : Parcelable
