@@ -39,6 +39,9 @@ class LargeDeadlineWidget : AppWidgetProvider() {
             Intent.ACTION_MY_PACKAGE_REPLACED, // 应用升级（覆盖安装）
             Intent.ACTION_CONFIGURATION_CHANGED, // 设置改变
             Intent.ACTION_BOOT_COMPLETED,  // 开机后
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+            Intent.ACTION_DATE_CHANGED,
             WidgetUpdateHelper.ACTION_WIDGET_UPDATE,  // 数据变化广播
             WidgetUpdateHelper.ACTION_WIDGET_REFRESH -> {  // 手动刷新广播
                 refreshAllWidgets(context)

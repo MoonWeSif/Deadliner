@@ -34,8 +34,18 @@ android {
         disable += "NullSafeMutableLiveData"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../deadliner-release.keystore")
+            storePassword = "deadliner2025"
+            keyAlias = "deadliner"
+            keyPassword = "deadliner2025"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

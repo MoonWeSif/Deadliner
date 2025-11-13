@@ -790,4 +790,36 @@ object GlobalUtils {
             excludedWeekdays
         )
     }
+
+    /**
+     * 计算用于“展示”的有效剩余时间（三段式：天/小时/分钟）。
+     * 业务取舍：
+     * - 天数按“排除指定星期几后的工作日数”计算（向下取整）。
+     * - 时/分直接取“实际剩余时间”的时分余数（向下取整，保证不进位），
+     *   这样即使首尾都落在排除日，也能避免始终显示 0 小时 0 分钟的违和感。
+     * - 若 end 已过期，则返回 0,0,0。
+     */
+    fun computeEffectiveRemainingFromNow(
+        endTime: String,
+        excludedWeekdays: Set<Int>
+    ): Triple<Long, Long, Long> {
+        val end = parseDateTime(endTime) ?: return Triple(0, 0, 0)
+        val now = LocalDateTime.now()
+        if (!now.isBefore(end)) return Triple(0, 0, 0)
+
+        val total = Duration.between(now, end)
+        val totalDays = total.toDays()
+        val dayMinutes = 24L * 60L
+        val remainderMinutes = (total.toMinutes() - totalDays * dayMinutes).coerceAtLeast(0)
+        val remHours = remainderMinutes / 60
+        val remMinutes = remainderMinutes % 60
+
+        val effectiveDays = if (excludedWeekdays.isEmpty()) {
+            totalDays
+        } else {
+            calculateRemainingDaysFromNowExcludingWeekdays(endTime, excludedWeekdays)
+        }
+
+        return Triple(effectiveDays, remHours, remMinutes)
+    }
 }
