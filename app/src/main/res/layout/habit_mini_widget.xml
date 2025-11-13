@@ -26,6 +26,19 @@
         />
 
     <ImageView
+        android:id="@+id/btn_refresh"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/widget_fab_bg"
+        android:backgroundTint="?attr/colorSecondary"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="6dp"
+        android:src="@drawable/ic_refresh"
+        android:tint="?android:attr/textColorPrimaryInverse" />
+
+    <ImageView
         android:id="@+id/btn_check_in"
         android:layout_width="40dp"
         android:layout_height="40dp"

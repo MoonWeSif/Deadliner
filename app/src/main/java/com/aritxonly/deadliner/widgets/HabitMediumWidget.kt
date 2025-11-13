@@ -29,6 +29,23 @@ class HabitMediumWidget : AppWidgetProvider() {
         }
     }
 
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        when (intent.action) {
+            WidgetUpdateHelper.ACTION_WIDGET_UPDATE,
+            WidgetUpdateHelper.ACTION_WIDGET_REFRESH -> {
+                refreshAllWidgets(context)
+            }
+        }
+    }
+
+    private fun refreshAllWidgets(context: Context) {
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val thisWidget = ComponentName(context, HabitMediumWidget::class.java)
+        val appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
+        onUpdate(context, appWidgetManager, appWidgetIds)
+    }
+
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         val provider = ComponentName(context, javaClass)
         for (appWidgetId in appWidgetIds) {
@@ -116,6 +133,18 @@ internal fun updateMediumAppWidget(
 
         // 你还可以用 alpha 表达禁用态（可选）
          views.setFloat(R.id.btn_checkin, "setAlpha", if (canClick) 1f else 0.6f)
+
+        // 设置刷新按钮的点击事件
+        val refreshIntent = Intent(context, HabitMediumWidget::class.java).apply {
+            action = WidgetUpdateHelper.ACTION_WIDGET_REFRESH
+        }
+        val refreshPi = PendingIntent.getBroadcast(
+            context,
+            appWidgetId,
+            refreshIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.btn_refresh, refreshPi)
     } else {
         views.setTextViewText(R.id.medium_title, context.getString(R.string.app_name))
         views.setTextViewText(R.id.tv_checkin, context.getString(R.string.add_widget))
@@ -127,6 +156,18 @@ internal fun updateMediumAppWidget(
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         )
+
+        // 设置刷新按钮的点击事件（即使habit为null也需要）
+        val refreshIntent = Intent(context, HabitMediumWidget::class.java).apply {
+            action = WidgetUpdateHelper.ACTION_WIDGET_REFRESH
+        }
+        val refreshPi = PendingIntent.getBroadcast(
+            context,
+            appWidgetId,
+            refreshIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.btn_refresh, refreshPi)
     }
 
     // 容器点击 → 打开 App

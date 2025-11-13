@@ -62,8 +62,10 @@ class HabitMiniWidget : AppWidgetProvider() {
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
-            Intent.ACTION_DATE_CHANGED -> {
-                // 日期/时间/时区变化时，刷新全部 → 按当天状态更新“打卡/已完成”
+            Intent.ACTION_DATE_CHANGED,
+            WidgetUpdateHelper.ACTION_WIDGET_UPDATE,
+            WidgetUpdateHelper.ACTION_WIDGET_REFRESH -> {
+                // 日期/时间/时区变化时，刷新全部 → 按当天状态更新"打卡/已完成"
                 refreshAllWidgets(context)
                 return
             }
@@ -231,6 +233,18 @@ internal fun updateAppMiniHabitWidget(
 
         setOnClickPendingIntent(R.id.widget_container, containerPi)
         setOnClickPendingIntent(R.id.btn_check_in, checkInPi)
+
+        // 设置刷新按钮的点击事件
+        val refreshIntent = Intent(context, HabitMiniWidget::class.java).apply {
+            action = WidgetUpdateHelper.ACTION_WIDGET_REFRESH
+        }
+        val refreshPi = PendingIntent.getBroadcast(
+            context,
+            appWidgetId,
+            refreshIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        setOnClickPendingIntent(R.id.btn_refresh, refreshPi)
     }
 
     // Instruct the widget manager to update the widget

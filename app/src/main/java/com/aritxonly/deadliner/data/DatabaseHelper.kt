@@ -13,6 +13,7 @@ import com.aritxonly.deadliner.model.SyncState
 import com.aritxonly.deadliner.model.Ver
 import java.time.LocalDateTime
 import androidx.core.database.sqlite.transaction
+import com.aritxonly.deadliner.widgets.WidgetUpdateHelper
 
 class DatabaseHelper private constructor(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
@@ -236,6 +237,10 @@ class DatabaseHelper private constructor(context: Context) :
             put(COLUMN_VER_TS, v.ts); put(COLUMN_VER_CTR, v.ctr); put(COLUMN_VER_DEV, v.dev)
         }
         db.update(TABLE_NAME, cv2, "$COLUMN_ID=?", arrayOf(id.toString()))
+
+        // Send broadcast to update widgets
+        WidgetUpdateHelper.sendUpdateBroadcast(context)
+
         return id
     }
 
@@ -343,6 +348,9 @@ class DatabaseHelper private constructor(context: Context) :
             put(COLUMN_EXCLUDED_WEEKDAYS, excludedWeekdaysStr)
         }
         db.update(TABLE_NAME, values, "$COLUMN_ID = ?", arrayOf(item.id.toString()))
+
+        // Send broadcast to update widgets
+        WidgetUpdateHelper.sendUpdateBroadcast(context)
     }
 
     fun deleteDDL(id: Long) {
@@ -353,6 +361,9 @@ class DatabaseHelper private constructor(context: Context) :
             put(COLUMN_VER_TS, v.ts); put(COLUMN_VER_CTR, v.ctr); put(COLUMN_VER_DEV, v.dev)
         }
         db.update(TABLE_NAME, values, "$COLUMN_ID = ?", arrayOf(id.toString()))
+
+        // Send broadcast to update widgets
+        WidgetUpdateHelper.sendUpdateBroadcast(context)
     }
     // endregion
 

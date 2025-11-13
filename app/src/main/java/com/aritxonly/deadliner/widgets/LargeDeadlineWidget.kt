@@ -38,7 +38,9 @@ class LargeDeadlineWidget : AppWidgetProvider() {
         when (intent.action) {
             Intent.ACTION_MY_PACKAGE_REPLACED, // 应用升级（覆盖安装）
             Intent.ACTION_CONFIGURATION_CHANGED, // 设置改变
-            Intent.ACTION_BOOT_COMPLETED -> {  // 开机后
+            Intent.ACTION_BOOT_COMPLETED,  // 开机后
+            WidgetUpdateHelper.ACTION_WIDGET_UPDATE,  // 数据变化广播
+            WidgetUpdateHelper.ACTION_WIDGET_REFRESH -> {  // 手动刷新广播
                 refreshAllWidgets(context)
             }
         }
@@ -116,6 +118,18 @@ internal fun updateLargeAppWidget(
     )
     views.setOnClickPendingIntent(R.id.btn_add_ddl, addPi)
     views.setViewVisibility(R.id.btn_add_ddl, addButtonVisibility)
+
+    // 设置刷新按钮的点击事件
+    val refreshIntent = Intent(context, LargeDeadlineWidget::class.java).apply {
+        action = WidgetUpdateHelper.ACTION_WIDGET_REFRESH
+    }
+    val refreshPi = PendingIntent.getBroadcast(
+        context,
+        appWidgetId,
+        refreshIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    views.setOnClickPendingIntent(R.id.btn_refresh, refreshPi)
 
     val mainIntent = Intent(context, LauncherActivity::class.java).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

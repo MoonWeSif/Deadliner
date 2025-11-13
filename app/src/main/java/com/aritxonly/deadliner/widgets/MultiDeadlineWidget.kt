@@ -37,7 +37,9 @@ class MultiDeadlineWidget : AppWidgetProvider() {
         when (intent.action) {
             Intent.ACTION_MY_PACKAGE_REPLACED, // 应用升级（覆盖安装）
             Intent.ACTION_CONFIGURATION_CHANGED, // 设置改变
-            Intent.ACTION_BOOT_COMPLETED -> {  // 开机后
+            Intent.ACTION_BOOT_COMPLETED,  // 开机后
+            WidgetUpdateHelper.ACTION_WIDGET_UPDATE,  // 数据变化广播
+            WidgetUpdateHelper.ACTION_WIDGET_REFRESH -> {  // 手动刷新广播
                 refreshAllWidgets(context)
             }
         }
@@ -110,6 +112,18 @@ internal fun updateAppMultiDeadlineWidget(
     )
     views.setOnClickPendingIntent(R.id.btn_add_ddl, addPi)
     views.setViewVisibility(R.id.btn_add_ddl, addButtonVisibility)
+
+    // 设置刷新按钮的点击事件
+    val refreshIntent = Intent(context, MultiDeadlineWidget::class.java).apply {
+        action = WidgetUpdateHelper.ACTION_WIDGET_REFRESH
+    }
+    val refreshPi = PendingIntent.getBroadcast(
+        context,
+        appWidgetId,
+        refreshIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    views.setOnClickPendingIntent(R.id.btn_refresh, refreshPi)
 
     val now = LocalDateTime.now()
     val parsedDDLs = allDDLs.map { ddl ->

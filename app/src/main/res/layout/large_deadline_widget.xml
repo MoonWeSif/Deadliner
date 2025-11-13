@@ -25,15 +25,28 @@
         android:textColor="?attr/colorOnPrimaryContainer"
         android:padding="4dp" />
 
-    <!-- “+” 按钮，固定在右上角 -->
+    <!-- "+" 按钮，固定在右上角 -->
     <ImageView
         android:id="@+id/btn_search"
         android:layout_width="28dp"
         android:layout_height="28dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:contentDescription="添加"
+        android:contentDescription="搜索"
         android:src="@drawable/ic_search"
+        android:layout_marginEnd="40dp"
+        android:layout_marginTop="8dp"
+        android:padding="4dp"
+        app:tint="?attr/colorOnPrimaryContainer" />
+
+    <ImageView
+        android:id="@+id/btn_refresh"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:contentDescription="刷新"
+        android:src="@drawable/ic_refresh"
         android:layout_margin="8dp"
         android:padding="4dp"
         app:tint="?attr/colorOnPrimaryContainer" />
