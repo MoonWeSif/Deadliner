@@ -18,6 +18,8 @@ import com.aritxonly.deadliner.widgets.WidgetUpdateHelper
 class DatabaseHelper private constructor(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
+    private val appContext = context.applicationContext
+
     companion object {
         @Volatile
         private var instance: DatabaseHelper? = null
@@ -247,7 +249,7 @@ class DatabaseHelper private constructor(context: Context) :
         db.update(TABLE_NAME, cv2, "$COLUMN_ID=?", arrayOf(id.toString()))
 
         // Send broadcast to update widgets
-        WidgetUpdateHelper.sendUpdateBroadcast(context)
+        WidgetUpdateHelper.sendUpdateBroadcast(appContext)
 
         return id
     }
@@ -367,7 +369,7 @@ class DatabaseHelper private constructor(context: Context) :
         db.update(TABLE_NAME, values, "$COLUMN_ID = ?", arrayOf(item.id.toString()))
 
         // Send broadcast to update widgets
-        WidgetUpdateHelper.sendUpdateBroadcast(context)
+        WidgetUpdateHelper.sendUpdateBroadcast(appContext)
     }
 
     fun deleteDDL(id: Long) {
@@ -380,7 +382,7 @@ class DatabaseHelper private constructor(context: Context) :
         db.update(TABLE_NAME, values, "$COLUMN_ID = ?", arrayOf(id.toString()))
 
         // Send broadcast to update widgets
-        WidgetUpdateHelper.sendUpdateBroadcast(context)
+        WidgetUpdateHelper.sendUpdateBroadcast(appContext)
     }
     // endregion
 
