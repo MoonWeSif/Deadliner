@@ -58,6 +58,7 @@ class DatabaseHelper private constructor(context: Context) :
         private const val COLUMN_VER_CTR = "ver_ctr"       // 版本计数（HLC counter）
         private const val COLUMN_VER_DEV = "ver_dev"       // 版本设备ID
         private const val COLUMN_EXCLUDED_WEEKDAYS = "excluded_weekdays"  // 排除的星期几，逗号分隔，如"6,7"表示周六日
+        private const val COLUMN_EXCLUDED_DATES = "excluded_dates"        // 排除的特定日期，逗号分隔，格式 yyyy-MM-dd
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -82,7 +83,8 @@ class DatabaseHelper private constructor(context: Context) :
                 $COLUMN_VER_TS TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z',
                 $COLUMN_VER_CTR INTEGER NOT NULL DEFAULT 0,
                 $COLUMN_VER_DEV TEXT NOT NULL DEFAULT '',
-                $COLUMN_EXCLUDED_WEEKDAYS TEXT DEFAULT ''
+                $COLUMN_EXCLUDED_WEEKDAYS TEXT DEFAULT '',
+                $COLUMN_EXCLUDED_DATES TEXT DEFAULT ''
             )
         """.trimIndent()
         db.execSQL(createTableQuery)
@@ -192,6 +194,10 @@ class DatabaseHelper private constructor(context: Context) :
             Log.d("DatabaseHelper", "Update DB to v12")
             db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_EXCLUDED_WEEKDAYS TEXT DEFAULT ''")
         }
+        if (oldVersion < 13) {
+            Log.d("DatabaseHelper", "Update DB to v13")
+            db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_EXCLUDED_DATES TEXT DEFAULT ''")
+        }
     }
 
     // region Deadline数据库
@@ -204,6 +210,7 @@ class DatabaseHelper private constructor(context: Context) :
         type: DeadlineType = DeadlineType.TASK,
         calendarEventId: Long? = null,
         excludedWeekdays: String = "",
+        excludedDates: String = "",
     ): Long {
         Log.d("Database", "Inserting $name, $startTime, $endTime, $note, $type")
         val db = writableDatabase
@@ -226,6 +233,7 @@ class DatabaseHelper private constructor(context: Context) :
             put(COLUMN_VER_CTR, 0)
             put(COLUMN_VER_DEV, getDeviceId())
             put(COLUMN_EXCLUDED_WEEKDAYS, excludedWeekdays)
+            put(COLUMN_EXCLUDED_DATES, excludedDates)
         }
 
         val id = db.insert(TABLE_NAME, null, values)
@@ -256,7 +264,7 @@ class DatabaseHelper private constructor(context: Context) :
         return parseCursor(cursor)
     }
 
-    fun getDDLsByType(type: DeadlineType): List<DDLItem> {
+        fun getDDLsByType(type: DeadlineType): List<DDLItem> {
         val db = readableDatabase
         val selection = "$COLUMN_DELETED = 0 AND $COLUMN_TYPE = ?"
         val selectionArgs = arrayOf(type.toString().lowercase())
@@ -267,7 +275,7 @@ class DatabaseHelper private constructor(context: Context) :
         return parseCursor(cursor)
     }
 
-    fun getDDLById(id: Long): DDLItem? {
+        fun getDDLById(id: Long): DDLItem? {
         val db = readableDatabase
         val cursor = db.query(
             TABLE_NAME, null,
@@ -289,6 +297,12 @@ class DatabaseHelper private constructor(context: Context) :
                 val excludedWeekdaysStr = getString(getColumnIndexOrThrow(COLUMN_EXCLUDED_WEEKDAYS)) ?: ""
                 val excludedWeekdays = if (excludedWeekdaysStr.isNotEmpty()) {
                     excludedWeekdaysStr.split(",").mapNotNull { it.toIntOrNull() }.toSet()
+                } else {
+                    emptySet()
+                }
+                val excludedDatesStr = getString(getColumnIndexOrThrow(COLUMN_EXCLUDED_DATES)) ?: ""
+                val excludedDates = if (excludedDatesStr.isNotEmpty()) {
+                    excludedDatesStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
                 } else {
                     emptySet()
                 }
@@ -317,7 +331,8 @@ class DatabaseHelper private constructor(context: Context) :
                             getInt(getColumnIndexOrThrow(COLUMN_CALENDAR_EVENT_ID))
                         ),
                         timeStamp = getString(getColumnIndexOrThrow(COLUMN_TIMESTAMP)),
-                        excludedWeekdays = excludedWeekdays
+                        excludedWeekdays = excludedWeekdays,
+                        excludedDates = excludedDates
                     )
                 )
             }
@@ -330,6 +345,7 @@ class DatabaseHelper private constructor(context: Context) :
         val db = writableDatabase
         val v = nextVersionUTC()
         val excludedWeekdaysStr = item.excludedWeekdays.joinToString(",")
+        val excludedDatesStr = item.excludedDates.joinToString(",")
         val values = ContentValues().apply {
             put(COLUMN_NAME, item.name)
             put(COLUMN_START_TIME, item.startTime)
@@ -346,6 +362,7 @@ class DatabaseHelper private constructor(context: Context) :
             put(COLUMN_TIMESTAMP, LocalDateTime.now().toString())
             put(COLUMN_VER_TS, v.ts); put(COLUMN_VER_CTR, v.ctr); put(COLUMN_VER_DEV, v.dev)
             put(COLUMN_EXCLUDED_WEEKDAYS, excludedWeekdaysStr)
+            put(COLUMN_EXCLUDED_DATES, excludedDatesStr)
         }
         db.update(TABLE_NAME, values, "$COLUMN_ID = ?", arrayOf(item.id.toString()))
 

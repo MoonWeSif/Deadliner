@@ -266,6 +266,45 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- 排除特定日期选择 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/excludeDatesCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="?attr/colorOutline"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/excludeWeekdaysCard">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/excludeDatesTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/exclude_specific_dates"
+                android:textSize="14sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/excludeDatesSummary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/exclude_dates_summary_none"
+                android:textSize="16sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/excludeDatesTitle"
+                app:layout_constraintEnd_toEndOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+
     <!-- 任务/备注 -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/ddlNoteLayout"
@@ -278,7 +317,7 @@
         app:boxCornerRadiusTopStart="12dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/excludeWeekdaysCard">
+        app:layout_constraintTop_toBottomOf="@id/excludeDatesCard">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/ddlNoteEditText"
             android:hint="@string/add_ddl_note"

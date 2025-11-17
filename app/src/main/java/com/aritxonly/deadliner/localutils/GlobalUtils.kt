@@ -790,4 +790,65 @@ object GlobalUtils {
             excludedWeekdays
         )
     }
+
+    /**
+     * 计算从 start 到 end 的“有效工作时长”（排除指定星期几 + 指定日期），精确到分钟。
+     * - `excludedWeekdays` 使用 java.time 的约定：周一=1, 周日=7。
+     * - `excludedDates` 为 yyyy-MM-dd 格式的本地日历日期字符串集合。
+     */
+    fun calculateRemainingDurationExcludingWeekdaysAndDates(
+        startTime: String,
+        endTime: String,
+        excludedWeekdays: Set<Int>,
+        excludedDates: Set<String>
+    ): Duration {
+        val start = parseDateTime(startTime) ?: LocalDateTime.now()
+        val end = parseDateTime(endTime) ?: return Duration.ZERO
+
+        if (!start.isBefore(end)) return Duration.ZERO
+        if (excludedWeekdays.isEmpty() && excludedDates.isEmpty()) {
+            return Duration.between(start, end)
+        }
+
+        val parsedExcludedDates: Set<LocalDate> = excludedDates.mapNotNull {
+            runCatching { LocalDate.parse(it) }.getOrNull()
+        }.toSet()
+
+        var total = Duration.ZERO
+        var currentDate = start.toLocalDate()
+        val endDate = end.toLocalDate()
+
+        while (!currentDate.isAfter(endDate)) {
+            val dayOfWeek = currentDate.dayOfWeek.value
+            val isWeekdayExcluded = dayOfWeek in excludedWeekdays
+            val isDateExcluded = currentDate in parsedExcludedDates
+
+            if (!isWeekdayExcluded && !isDateExcluded) {
+                val windowStart = if (currentDate == start.toLocalDate()) start else currentDate.atStartOfDay()
+                val windowEnd = if (currentDate == end.toLocalDate()) end else currentDate.plusDays(1).atStartOfDay()
+                if (windowEnd.isAfter(windowStart)) {
+                    total = total.plus(Duration.between(windowStart, windowEnd))
+                }
+            }
+            currentDate = currentDate.plusDays(1)
+        }
+
+        return total
+    }
+
+    /**
+     * 计算从“现在”到 endTime 的有效工作时长（排除指定星期几 + 指定日期），精确到分钟。
+     */
+    fun calculateRemainingDurationFromNowExcludingWeekdaysAndDates(
+        endTime: String,
+        excludedWeekdays: Set<Int>,
+        excludedDates: Set<String>
+    ): Duration {
+        return calculateRemainingDurationExcludingWeekdaysAndDates(
+            LocalDateTime.now().toString(),
+            endTime,
+            excludedWeekdays,
+            excludedDates
+        )
+    }
 }

@@ -575,13 +575,14 @@ fun DeadlineDetailInfo(deadline: DDLItem, waterLevel: Float) {
     val totalRemainingDays = remainingDuration.toDays()
     val totalRemainingTimeText = if (remainingDuration.isNegative) stringResource(R.string.overdue) else formatDuration(context, remainingDuration)
     
-    // 计算排除特定星期几后的“有效工作时间”（精确到分）
+    // 计算排除特定星期几 + 特定日期后的“有效工作时间”（精确到分）
     val excludedRemainingTimeText = if (remainingDuration.isNegative) {
         stringResource(R.string.overdue)
-    } else if (deadline.excludedWeekdays.isNotEmpty()) {
-        val excludedDuration = GlobalUtils.calculateRemainingDurationFromNowExcludingWeekdays(
+    } else if (deadline.excludedWeekdays.isNotEmpty() || deadline.excludedDates.isNotEmpty()) {
+        val excludedDuration = GlobalUtils.calculateRemainingDurationFromNowExcludingWeekdaysAndDates(
             deadline.endTime,
-            deadline.excludedWeekdays
+            deadline.excludedWeekdays,
+            deadline.excludedDates
         )
         formatDuration(context, excludedDuration)
     } else {
@@ -629,7 +630,7 @@ fun DeadlineDetailInfo(deadline: DDLItem, waterLevel: Float) {
             style = MaterialTheme.typography.bodyMedium,
             color = textColor
         )
-        if (deadline.excludedWeekdays.isNotEmpty()) {
+        if (deadline.excludedWeekdays.isNotEmpty() || deadline.excludedDates.isNotEmpty()) {
             Text(
                 text = stringResource(R.string.label_total_remaining_time, totalRemainingTimeText),
                 style = MaterialTheme.typography.bodyMedium,

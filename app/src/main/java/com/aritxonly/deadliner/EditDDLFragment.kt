@@ -31,6 +31,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.*
 import androidx.core.graphics.drawable.toDrawable
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.MaterialDatePicker
 
 class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLItem) -> Unit) : DialogFragment() {
 
@@ -62,6 +65,10 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
     private lateinit var chipFriday: com.google.android.material.chip.Chip
     private lateinit var chipSaturday: com.google.android.material.chip.Chip
     private lateinit var chipSunday: com.google.android.material.chip.Chip
+
+    private lateinit var excludeDatesCard: MaterialCardView
+    private lateinit var excludeDatesSummary: TextView
+    private val excludedDates: MutableSet<String> = mutableSetOf()
 
     override fun onStart() {
         super.onStart()
@@ -111,6 +118,9 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
         chipFriday = view.findViewById(R.id.chipFriday)
         chipSaturday = view.findViewById(R.id.chipSaturday)
         chipSunday = view.findViewById(R.id.chipSunday)
+
+        excludeDatesCard = view.findViewById(R.id.excludeDatesCard)
+        excludeDatesSummary = view.findViewById(R.id.excludeDatesSummary)
         
         // 设置已排除的星期几
         chipMonday.isChecked = 1 in ddlItem.excludedWeekdays
@@ -120,6 +130,16 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
         chipFriday.isChecked = 5 in ddlItem.excludedWeekdays
         chipSaturday.isChecked = 6 in ddlItem.excludedWeekdays
         chipSunday.isChecked = 7 in ddlItem.excludedWeekdays
+
+        // 初始化排除的特定日期集合
+        excludedDates.clear()
+        excludedDates.addAll(ddlItem.excludedDates)
+        val initialExcludedCount = excludedDates.size
+        excludeDatesSummary.text = if (initialExcludedCount == 0) {
+            getString(R.string.exclude_dates_summary_none)
+        } else {
+            getString(R.string.exclude_dates_summary_days, initialExcludedCount)
+        }
 
         ddlNameEditText.setText(ddlItem.name)
         startTimeContent.text = formatLocalDateTime(startTime)
@@ -177,6 +197,11 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
             }
         }
 
+        // 选择要排除的特定日期区间，多次选择可叠加
+        excludeDatesCard.setOnClickListener {
+            showExcludeDatesPicker()
+        }
+
         // 保存按钮点击事件
         saveButton.setOnClickListener {
             val excludedWeekdays = mutableSetOf<Int>()
@@ -196,7 +221,8 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
                         endTime = endTime.toString(),
                         note = ddlNoteEditText.text.toString(),
                         type = DeadlineType.TASK,
-                        excludedWeekdays = excludedWeekdays
+                        excludedWeekdays = excludedWeekdays,
+                        excludedDates = excludedDates
                     )
                     onUpdate(updatedDDL)
                 }
@@ -224,7 +250,8 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
                             refreshDate = LocalDate.now().toString()
                         ).toJson(),
                         type = DeadlineType.HABIT,
-                        excludedWeekdays = excludedWeekdays
+                        excludedWeekdays = excludedWeekdays,
+                        excludedDates = excludedDates
                     )
                     onUpdate(updatedDDL)
                 }
@@ -235,6 +262,55 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
         backButton.setOnClickListener {
             dismiss()
         }
+    }
+
+    private fun showExcludeDatesPicker() {
+        val end = endTime
+        if (end == null) {
+            // 没有结束时间时，不允许选择排除日期
+            return
+        }
+
+        val zone = java.time.ZoneId.systemDefault()
+        val startDate = startTime.toLocalDate()
+        val endDate = end.toLocalDate()
+
+        val startMillis = startDate.atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMillis = endDate.atStartOfDay(zone).toInstant().toEpochMilli()
+
+        val constraints = CalendarConstraints.Builder()
+            .setStart(startMillis)
+            .setEnd(endMillis)
+            .build()
+
+        val picker = MaterialDatePicker.Builder.dateRangePicker()
+            .setTitleText(R.string.exclude_specific_dates)
+            .setCalendarConstraints(constraints)
+            .build()
+
+        picker.addOnPositiveButtonClickListener { selection ->
+            val range = selection ?: return@addOnPositiveButtonClickListener
+            val startUtc = range.first ?: return@addOnPositiveButtonClickListener
+            val endUtc = range.second ?: return@addOnPositiveButtonClickListener
+
+            val pickedStart = java.time.Instant.ofEpochMilli(startUtc).atZone(zone).toLocalDate()
+            val pickedEnd = java.time.Instant.ofEpochMilli(endUtc).atZone(zone).toLocalDate()
+
+            var current = pickedStart
+            while (!current.isAfter(pickedEnd)) {
+                excludedDates.add(current.toString())
+                current = current.plusDays(1)
+            }
+
+            val count = excludedDates.size
+            excludeDatesSummary.text = if (count == 0) {
+                getString(R.string.exclude_dates_summary_none)
+            } else {
+                getString(R.string.exclude_dates_summary_days, count)
+            }
+        }
+
+        picker.show(parentFragmentManager, "exclude_dates_range_picker_edit")
     }
 
     /**

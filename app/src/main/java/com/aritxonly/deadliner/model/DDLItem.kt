@@ -21,5 +21,7 @@ data class DDLItem(
     var habitTotalCount: Int = 0,
     var calendarEventId: Long? = null,
     var timeStamp: String = LocalDateTime.now().toString(),
-    var excludedWeekdays: Set<Int> = emptySet()
+    var excludedWeekdays: Set<Int> = emptySet(),
+    // 排除的特定日期，格式为 yyyy-MM-dd，本地日历
+    var excludedDates: Set<String> = emptySet(),
 ) : Parcelable

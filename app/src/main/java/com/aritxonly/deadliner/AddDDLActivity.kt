@@ -47,7 +47,12 @@ import com.aritxonly.deadliner.model.toJson
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -93,6 +98,14 @@ class AddDDLActivity : AppCompatActivity() {
     private lateinit var chipFriday: com.google.android.material.chip.Chip
     private lateinit var chipSaturday: com.google.android.material.chip.Chip
     private lateinit var chipSunday: com.google.android.material.chip.Chip
+
+    private lateinit var excludeDatesCard: MaterialCardView
+    private lateinit var excludeDatesSummary: TextView
+    private val excludedDates: MutableSet<String> = mutableSetOf()
+
+    private lateinit var excludeDatesCard: MaterialCardView
+    private lateinit var excludeDatesSummary: TextView
+    private val excludedDates: MutableSet<String> = mutableSetOf()
 
     private var calendarEventId: Long? = null
 
@@ -151,6 +164,12 @@ class AddDDLActivity : AppCompatActivity() {
         chipSaturday = findViewById(R.id.chipSaturday)
         chipSunday = findViewById(R.id.chipSunday)
 
+        excludeDatesCard = findViewById(R.id.excludeDatesCard)
+        excludeDatesSummary = findViewById(R.id.excludeDatesSummary)
+
+        excludeDatesCard = findViewById(R.id.excludeDatesCard)
+        excludeDatesSummary = findViewById(R.id.excludeDatesSummary)
+
         val startTimeContent: TextView = findViewById(R.id.startTimeContent)
         val endTimeContent: TextView = findViewById(R.id.endTimeContent)
 
@@ -174,6 +193,16 @@ class AddDDLActivity : AppCompatActivity() {
                 endTime = selectedTime
                 endTimeContent.text = formatLocalDateTime(endTime!!)
             }
+        }
+
+        // 排除特定日期：使用连续区间选择器，多次选择可叠加
+        excludeDatesCard.setOnClickListener {
+            showExcludeDatesPicker()
+        }
+
+        // 排除特定日期：使用连续区间选择器，多次选择可叠加
+        excludeDatesCard.setOnClickListener {
+            showExcludeDatesPicker()
         }
 
         // 保存按钮点击事件
@@ -267,6 +296,54 @@ class AddDDLActivity : AppCompatActivity() {
         ddlNoteEditText.setText(generatedDDL?.note)
     }
 
+    private fun showExcludeDatesPicker() {
+        val start = startTime
+        val end = endTime
+
+        if (start == null || end == null) {
+            Toast.makeText(this, R.string.please_select_time_first, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val zone = java.time.ZoneId.systemDefault()
+        val startMillis = start.toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMillis = end.toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli()
+
+        val constraints = CalendarConstraints.Builder()
+            .setStart(startMillis)
+            .setEnd(endMillis)
+            .build()
+
+        val picker = MaterialDatePicker.Builder.dateRangePicker()
+            .setTitleText(R.string.exclude_specific_dates)
+            .setCalendarConstraints(constraints)
+            .build()
+
+        picker.addOnPositiveButtonClickListener { selection ->
+            val range = selection ?: return@addOnPositiveButtonClickListener
+            val startUtc = range.first ?: return@addOnPositiveButtonClickListener
+            val endUtc = range.second ?: return@addOnPositiveButtonClickListener
+
+            val startDate = java.time.Instant.ofEpochMilli(startUtc).atZone(zone).toLocalDate()
+            val endDate = java.time.Instant.ofEpochMilli(endUtc).atZone(zone).toLocalDate()
+
+            var current = startDate
+            while (!current.isAfter(endDate)) {
+                excludedDates.add(current.toString())
+                current = current.plusDays(1)
+            }
+
+            val count = excludedDates.size
+            excludeDatesSummary.text = if (count == 0) {
+                getString(R.string.exclude_dates_summary_none)
+            } else {
+                getString(R.string.exclude_dates_summary_days, count)
+            }
+        }
+
+        picker.show(supportFragmentManager, "exclude_dates_range_picker")
+    }
+
     private fun save(toCalendar: Boolean) {
         val ddlName = ddlNameEditText.text.toString()
         val ddlNote = ddlNoteEditText.text.toString()
@@ -301,7 +378,8 @@ class AddDDLActivity : AppCompatActivity() {
                     endTime.toString(),
                     ddlNote,
                     calendarEventId = calendarEventId,
-                    excludedWeekdays = excludedWeekdays
+                    excludedWeekdays = excludedWeekdays,
+                    excludedDates = excludedDates
                 )
 
                 repo.getDDLById(ddlId)?.let { item ->
@@ -338,7 +416,8 @@ class AddDDLActivity : AppCompatActivity() {
                         refreshDate = LocalDate.now().toString()
                     ).toJson(),
                     type = DeadlineType.HABIT,
-                    excludedWeekdays = excludedWeekdays
+                    excludedWeekdays = excludedWeekdays,
+                    excludedDates = excludedDates
                 )
                 Log.d("endTime", endTime.toString())
                 setResult(RESULT_OK)
