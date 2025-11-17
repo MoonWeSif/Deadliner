@@ -38,6 +38,9 @@ class MultiDeadlineWidget : AppWidgetProvider() {
             Intent.ACTION_MY_PACKAGE_REPLACED, // 应用升级（覆盖安装）
             Intent.ACTION_CONFIGURATION_CHANGED, // 设置改变
             Intent.ACTION_BOOT_COMPLETED,  // 开机后
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+            Intent.ACTION_DATE_CHANGED,
             WidgetUpdateHelper.ACTION_WIDGET_UPDATE,  // 数据变化广播
             WidgetUpdateHelper.ACTION_WIDGET_REFRESH -> {  // 手动刷新广播
                 refreshAllWidgets(context)
@@ -204,9 +207,9 @@ internal fun updateAppMultiDeadlineWidget(
 
         // 将剩余时间转换为小时和分钟格式
         val total = ChronoUnit.MILLIS.between(parsed.startTime, parsed.endTime)
-        val maxTotal = maxOf(0, total)
-        val done = ChronoUnit.MILLIS.between(parsed.startTime, now).coerceIn(0, maxTotal)
-        val percent = (done * 100 / total).toInt()
+        val safeTotal = if (total <= 0) 1 else total
+        val done = ChronoUnit.MILLIS.between(parsed.startTime, now).coerceIn(0, safeTotal)
+        val percent = (done * 100 / safeTotal).toInt()
 
         val remainingMillis = parsed.remainingMillis
         val timeText = if (remainingMillis < 0) {

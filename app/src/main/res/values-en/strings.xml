@@ -189,6 +189,8 @@
     <string name="outdated">Overdue</string>
     <string name="progress_hours">%.1f hours %d%%</string>
     <string name="progress_days">%.1f days %d%%</string>
+    <!-- For widgets: integer days (floor) + percent -->
+    <string name="progress_days_int">%1$d days %2$d%%</string>
     <string name="untitled">(Untitled)</string>
     <string name="ai_overlay_enter_questions">Enter your question…</string>
     <string name="ai_overlay_hint_top">Ask Deadliner AI to quickly add a schedule</string>

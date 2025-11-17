@@ -243,6 +243,8 @@
     <string name="outdated">逾期</string>
     <string name="progress_hours">%.1f小时 %d%%</string>
     <string name="progress_days">%.1f天 %d%%</string>
+    <!-- 用于小组件：只显示向下取整的“天 + 百分比” -->
+    <string name="progress_days_int">%1$d天 %2$d%%</string>
     <string name="untitled">(无标题)</string>
     <string name="ai_overlay_enter_questions">输入你的问题…</string>
     <string name="ai_overlay_hint_top">向 Deadliner AI 提问，快速添加日程</string>

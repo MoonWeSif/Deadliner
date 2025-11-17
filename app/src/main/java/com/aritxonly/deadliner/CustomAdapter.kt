@@ -473,8 +473,20 @@ class CustomAdapter(
                 context.getString(R.string.ddl_overdue_short)
         } else {
             // 需要展示正向的“还有多久”（到开始 或 到结束）
-            val target = if (beforeStart) startTime else endTime
-            val remainMin = Duration.between(now, target).toMinutes().coerceAtLeast(0).toInt()
+            // 未开始：按原逻辑到开始时间；已开始：显示“实际工作时间”（排除指定星期几）
+            val remainMin = if (beforeStart) {
+                Duration.between(now, startTime).toMinutes().coerceAtLeast(0).toInt()
+            } else {
+                val duration = if (item.excludedWeekdays.isNotEmpty()) {
+                    GlobalUtils.calculateRemainingDurationFromNowExcludingWeekdays(
+                        item.endTime,
+                        item.excludedWeekdays
+                    )
+                } else {
+                    Duration.between(now, endTime)
+                }
+                duration.toMinutes().coerceAtLeast(0).toInt()
+            }
 
             val days = remainMin / (24 * 60)
             val hours = (remainMin % (24 * 60)) / 60
