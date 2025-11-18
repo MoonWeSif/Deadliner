@@ -41,15 +41,18 @@
 
     <ImageView
         android:id="@+id/btn_refresh"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:contentDescription="刷新"
         android:src="@drawable/ic_refresh"
         android:layout_margin="8dp"
-        android:padding="4dp"
-        app:tint="?attr/colorOnPrimaryContainer" />
+        android:background="@drawable/widget_fab_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="8dp"
+        app:tint="@color/widget_container_fg" />
 
     <!-- 用于装载所有 DDL item 的父容器 -->
     <LinearLayout

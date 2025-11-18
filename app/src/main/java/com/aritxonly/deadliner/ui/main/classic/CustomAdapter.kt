@@ -455,10 +455,11 @@ class CustomAdapter(
             val remainMin = if (beforeStart) {
                 Duration.between(now, startTime).toMinutes().coerceAtLeast(0).toInt()
             } else {
-                val duration = if (item.excludedWeekdays.isNotEmpty()) {
-                    GlobalUtils.calculateRemainingDurationFromNowExcludingWeekdays(
+                val duration = if (item.excludedWeekdays.isNotEmpty() || item.excludedDates.isNotEmpty()) {
+                    GlobalUtils.calculateRemainingDurationFromNowExcludingWeekdaysAndDates(
                         item.endTime,
-                        item.excludedWeekdays
+                        item.excludedWeekdays,
+                        item.excludedDates
                     )
                 } else {
                     Duration.between(now, endTime)

@@ -929,6 +929,54 @@ object GlobalUtils {
     }
 
     /**
+     * 将排除的特定日期集合格式化为简短摘要，例如：
+     *  - 单天："2025-05-01"
+     *  - 连续区间："2025-05-01 ~ 2025-05-03"
+     *  多个区间用顿号分隔，最多展示 [maxRanges] 段，超出的用"等"表示。
+     *
+     * 输入为 yyyy-MM-dd 字符串集合，解析失败的条目会被自动忽略。
+     */
+    fun buildExcludedDatesSummary(
+        excludedDates: Set<String>,
+        maxRanges: Int = 3
+    ): String {
+        if (excludedDates.isEmpty()) return ""
+
+        val parsedDates = excludedDates.mapNotNull {
+            runCatching { LocalDate.parse(it) }.getOrNull()
+        }.sorted()
+        if (parsedDates.isEmpty()) return ""
+
+        val ranges = mutableListOf<Pair<LocalDate, LocalDate>>()
+        var rangeStart = parsedDates.first()
+        var prevDate = rangeStart
+
+        for (date in parsedDates.drop(1)) {
+            if (!date.isEqual(prevDate.plusDays(1))) {
+                ranges.add(rangeStart to prevDate)
+                rangeStart = date
+            }
+            prevDate = date
+        }
+        ranges.add(rangeStart to prevDate)
+
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val rangeStrings = ranges.map { (start, end) ->
+            if (start == end) formatter.format(start)
+            else "${formatter.format(start)} ~ ${formatter.format(end)}"
+        }
+
+        val shown = rangeStrings.take(maxRanges)
+        val remaining = rangeStrings.size - shown.size
+
+        return if (remaining > 0) {
+            shown.joinToString("，") + " 等"
+        } else {
+            shown.joinToString("，")
+        }
+    }
+
+    /**
     * 计算用于"展示"的有效剩余时间（三段式：天/小时/分钟）。
     * 业务取舍：
     * - 天数按"排除指定星期几后的工作日数"计算（向下取整）。

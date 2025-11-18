@@ -28,6 +28,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.util.Pair
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.addTextChangedListener
@@ -373,8 +374,23 @@ class AddDDLActivity : AppCompatActivity() {
         }
 
         val zone = java.time.ZoneId.systemDefault()
-        val startMillis = start.toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli()
-        val endMillis = end.toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli()
+        val startDate = start.toLocalDate()
+        val endDate = end.toLocalDate()
+
+        val startMillis = startDate.atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMillis = endDate.atStartOfDay(zone).toInstant().toEpochMilli()
+
+        val deadlineRangeText = "$startDate ~ $endDate"
+        val existingSummary = GlobalUtils.buildExcludedDatesSummary(excludedDates)
+        val titleText = if (existingSummary.isBlank()) {
+            getString(R.string.exclude_specific_dates_with_range, deadlineRangeText)
+        } else {
+            getString(
+                R.string.exclude_specific_dates_with_range_and_existing,
+                deadlineRangeText,
+                existingSummary
+            )
+        }
 
         val constraints = CalendarConstraints.Builder()
             .setStart(startMillis)
@@ -382,7 +398,7 @@ class AddDDLActivity : AppCompatActivity() {
             .build()
 
         val picker = MaterialDatePicker.Builder.dateRangePicker()
-            .setTitleText(R.string.exclude_specific_dates)
+            .setTitleText(titleText)
             .setCalendarConstraints(constraints)
             .build()
 
@@ -391,11 +407,16 @@ class AddDDLActivity : AppCompatActivity() {
             val startUtc = range.first ?: return@addOnPositiveButtonClickListener
             val endUtc = range.second ?: return@addOnPositiveButtonClickListener
 
-            val startDate = java.time.Instant.ofEpochMilli(startUtc).atZone(zone).toLocalDate()
-            val endDate = java.time.Instant.ofEpochMilli(endUtc).atZone(zone).toLocalDate()
+            val pickedStart = java.time.Instant.ofEpochMilli(startUtc).atZone(zone).toLocalDate()
+            val pickedEnd = java.time.Instant.ofEpochMilli(endUtc).atZone(zone).toLocalDate()
 
-            var current = startDate
-            while (!current.isAfter(endDate)) {
+            // 额外防御：即便约束异常，也只在 Deadline 范围内写入
+            val clampedStart = if (pickedStart.isBefore(startDate)) startDate else pickedStart
+            val clampedEnd = if (pickedEnd.isAfter(endDate)) endDate else pickedEnd
+            if (clampedStart.isAfter(clampedEnd)) return@addOnPositiveButtonClickListener
+
+            var current = clampedStart
+            while (!current.isAfter(clampedEnd)) {
                 excludedDates.add(current.toString())
                 current = current.plusDays(1)
             }
@@ -404,7 +425,12 @@ class AddDDLActivity : AppCompatActivity() {
             excludeDatesSummary.text = if (count == 0) {
                 getString(R.string.exclude_dates_summary_none)
             } else {
-                getString(R.string.exclude_dates_summary_days, count)
+                val detail = GlobalUtils.buildExcludedDatesSummary(excludedDates)
+                if (detail.isBlank()) {
+                    getString(R.string.exclude_dates_summary_days, count)
+                } else {
+                    getString(R.string.exclude_dates_summary_days, count) + "：" + detail
+                }
             }
         }
 

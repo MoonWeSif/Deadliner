@@ -31,6 +31,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.*
 import androidx.core.graphics.drawable.toDrawable
+import androidx.core.util.Pair
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
@@ -143,7 +144,12 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
         excludeDatesSummary.text = if (initialExcludedCount == 0) {
             getString(R.string.exclude_dates_summary_none)
         } else {
-            getString(R.string.exclude_dates_summary_days, initialExcludedCount)
+            val detail = GlobalUtils.buildExcludedDatesSummary(excludedDates)
+            if (detail.isBlank()) {
+                getString(R.string.exclude_dates_summary_days, initialExcludedCount)
+            } else {
+                getString(R.string.exclude_dates_summary_days, initialExcludedCount) + "：" + detail
+            }
         }
 
         ddlNameEditText.setText(ddlItem.name)
@@ -349,13 +355,25 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
         val startMillis = startDate.atStartOfDay(zone).toInstant().toEpochMilli()
         val endMillis = endDate.atStartOfDay(zone).toInstant().toEpochMilli()
 
+        val deadlineRangeText = "$startDate ~ $endDate"
+        val existingSummary = GlobalUtils.buildExcludedDatesSummary(excludedDates)
+        val titleText = if (existingSummary.isBlank()) {
+            getString(R.string.exclude_specific_dates_with_range, deadlineRangeText)
+        } else {
+            getString(
+                R.string.exclude_specific_dates_with_range_and_existing,
+                deadlineRangeText,
+                existingSummary
+            )
+        }
+
         val constraints = CalendarConstraints.Builder()
             .setStart(startMillis)
             .setEnd(endMillis)
             .build()
 
         val picker = MaterialDatePicker.Builder.dateRangePicker()
-            .setTitleText(R.string.exclude_specific_dates)
+            .setTitleText(titleText)
             .setCalendarConstraints(constraints)
             .build()
 
@@ -367,8 +385,12 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
             val pickedStart = java.time.Instant.ofEpochMilli(startUtc).atZone(zone).toLocalDate()
             val pickedEnd = java.time.Instant.ofEpochMilli(endUtc).atZone(zone).toLocalDate()
 
-            var current = pickedStart
-            while (!current.isAfter(pickedEnd)) {
+            val clampedStart = if (pickedStart.isBefore(startDate)) startDate else pickedStart
+            val clampedEnd = if (pickedEnd.isAfter(endDate)) endDate else pickedEnd
+            if (clampedStart.isAfter(clampedEnd)) return@addOnPositiveButtonClickListener
+
+            var current = clampedStart
+            while (!current.isAfter(clampedEnd)) {
                 excludedDates.add(current.toString())
                 current = current.plusDays(1)
             }
@@ -377,7 +399,12 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
             excludeDatesSummary.text = if (count == 0) {
                 getString(R.string.exclude_dates_summary_none)
             } else {
-                getString(R.string.exclude_dates_summary_days, count)
+                val detail = GlobalUtils.buildExcludedDatesSummary(excludedDates)
+                if (detail.isBlank()) {
+                    getString(R.string.exclude_dates_summary_days, count)
+                } else {
+                    getString(R.string.exclude_dates_summary_days, count) + "：" + detail
+                }
             }
         }
 

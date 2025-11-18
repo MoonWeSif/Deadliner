@@ -18,6 +18,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -132,18 +133,36 @@ internal fun updateAppMultiDeadlineWidget(
     val parsedDDLs = allDDLs.map { ddl ->
         val startTime = GlobalUtils.safeParseDateTime(ddl.startTime)
         val endTime = GlobalUtils.safeParseDateTime(ddl.endTime)
-        val remainingMillis = ChronoUnit.MILLIS.between(now, endTime)
-        val isCompleted = ddl.isCompleted
-        val isStared = ddl.isStared
-        ParsedDDL(ddl, startTime, endTime, remainingMillis, isCompleted, isStared)
+
+        val actualRemainingMillis = ChronoUnit.MILLIS.between(now, endTime)
+        val effectiveDuration = if (ddl.excludedWeekdays.isEmpty() && ddl.excludedDates.isEmpty()) {
+            Duration.ofMillis(actualRemainingMillis.coerceAtLeast(0))
+        } else {
+            GlobalUtils.calculateRemainingDurationFromNowExcludingWeekdaysAndDates(
+                ddl.endTime,
+                ddl.excludedWeekdays,
+                ddl.excludedDates
+            )
+        }
+        val effectiveRemainingMillis = effectiveDuration.toMillis()
+
+        ParsedDDL(
+            ddl = ddl,
+            startTime = startTime,
+            endTime = endTime,
+            actualRemainingMillis = actualRemainingMillis,
+            effectiveRemainingMillis = effectiveRemainingMillis,
+            isCompleted = ddl.isCompleted,
+            isStared = ddl.isStared
+        )
     }
 
-    // 按剩余时间排序
-    val sortedDDLs = parsedDDLs.sortedWith(compareBy<ParsedDDL> { it.isCompleted }
-        .thenBy { !it.isStared }
-        .thenBy {
-            it.remainingMillis
-        })
+    // 按“有效工作时间”排序，同时保证已完成/星标逻辑不变
+    val sortedDDLs = parsedDDLs.sortedWith(
+        compareBy<ParsedDDL> { it.isCompleted }
+            .thenBy { !it.isStared }
+            .thenBy { it.effectiveRemainingMillis }
+    )
 
     Log.d("Widget", "DDLs $parsedDDLs")
     // 取前3个
@@ -211,14 +230,16 @@ internal fun updateAppMultiDeadlineWidget(
         val done = ChronoUnit.MILLIS.between(parsed.startTime, now).coerceIn(0, safeTotal)
         val percent = (done * 100 / safeTotal).toInt()
 
-        val remainingMillis = parsed.remainingMillis
-        val timeText = if (remainingMillis < 0) {
+        val actualRemainingMillis = parsed.actualRemainingMillis
+        val displayMillis = parsed.effectiveRemainingMillis
+
+        val timeText = if (actualRemainingMillis < 0) {
             views.setProgressBar(R.id.item_progress, 100, 0, false)
             context.getString(R.string.outdated)
         } else {
-            val days: Double = remainingMillis.toDouble() / (3600000 * 24)
+            val days: Double = displayMillis.toDouble() / (3600000 * 24)
             if (days < 1.0f) {
-                val hours: Double = remainingMillis.toDouble() / 3600000
+                val hours: Double = displayMillis.toDouble() / 3600000
                 context.getString(R.string.progress_hours, hours, percent)
             } else {
                 context.getString(R.string.progress_days, days, percent)
@@ -243,7 +264,8 @@ data class ParsedDDL(
     val ddl: DDLItem,
     val startTime: LocalDateTime,
     val endTime: LocalDateTime,
-    val remainingMillis: Long,
+    val actualRemainingMillis: Long,
+    val effectiveRemainingMillis: Long,
     val isCompleted: Boolean,
     val isStared: Boolean
 )

@@ -18,6 +18,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.max
@@ -159,13 +160,35 @@ internal fun updateLargeAppWidget(
     val parsed = allDdls.map { ddl ->
         val start = GlobalUtils.safeParseDateTime(ddl.startTime)
         val end = GlobalUtils.safeParseDateTime(ddl.endTime)
-        val remaining = ChronoUnit.MILLIS.between(now, end)
-        ParsedDDL(ddl, start, end, remaining, false, false)
+
+        val actualRemaining = ChronoUnit.MILLIS.between(now, end)
+        val effectiveDuration = if (ddl.excludedWeekdays.isEmpty() && ddl.excludedDates.isEmpty()) {
+            Duration.ofMillis(actualRemaining.coerceAtLeast(0))
+        } else {
+            GlobalUtils.calculateRemainingDurationFromNowExcludingWeekdaysAndDates(
+                ddl.endTime,
+                ddl.excludedWeekdays,
+                ddl.excludedDates
+            )
+        }
+        val effectiveRemaining = effectiveDuration.toMillis()
+
+        ParsedDDL(
+            ddl = ddl,
+            startTime = start,
+            endTime = end,
+            actualRemainingMillis = actualRemaining,
+            effectiveRemainingMillis = effectiveRemaining,
+            isCompleted = false,
+            isStared = false
+        )
     }
 
     val sorted = parsed
-        .sortedWith(compareBy<ParsedDDL> { it.ddl.isStared.not() }
-            .thenBy { it.remainingMillis })
+        .sortedWith(
+            compareBy<ParsedDDL> { it.ddl.isStared.not() }
+                .thenBy { it.effectiveRemainingMillis }
+        )
         .take(if (maxItems > 0) maxItems else 0)
 
     // 动态添加每条 item
@@ -188,13 +211,16 @@ internal fun updateLargeAppWidget(
             false
         )
         // 剩余时间文本
-        val text = if (item.remainingMillis < 0) {
+        val actualRemainingMillis = item.actualRemainingMillis
+        val displayMillis = item.effectiveRemainingMillis
+
+        val text = if (actualRemainingMillis < 0) {
             itemRv.setProgressBar(R.id.item_progress, 100, 0, false)
             context.getString(R.string.outdated)
         } else {
-            val days: Double = item.remainingMillis.toDouble() / (3600000 * 24)
+            val days: Double = displayMillis.toDouble() / (3600000 * 24)
             if (days < 1.0f) {
-                val hours: Double = item.remainingMillis.toDouble() / 3600000
+                val hours: Double = displayMillis.toDouble() / 3600000
                 context.getString(R.string.progress_hours, hours, percent)
             } else {
                 context.getString(R.string.progress_days, days, percent)

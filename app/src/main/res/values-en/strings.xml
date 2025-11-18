@@ -266,7 +266,14 @@
     <string name="duration_hours_minutes">%1$d hours %2$d minutes</string>
     <string name="label_start_time">Start time: %1$s</string>
     <string name="label_end_time">End time: %1$s</string>
-    <string name="label_remaining_time">Remaining time: %1$s</string>
+    <string name="label_total_remaining_time">Actual remaining time: %1$s</string>
+    <string name="label_remaining_time">Effective working time: %1$s</string>
+    <string name="exclude_specific_dates">Exclude specific dates (optional)</string>
+    <string name="exclude_specific_dates_with_range">Exclude specific dates (optional)&#x0A;Deadline: %1$s</string>
+    <string name="exclude_specific_dates_with_range_and_existing">Exclude specific dates (optional)&#x0A;Deadline: %1$s&#x0A;Current: %2$s</string>
+    <string name="exclude_dates_summary_none">None</string>
+    <string name="exclude_dates_summary_days">Excluded %1$d days</string>
+    <string name="days_format">%1$d days</string>
     <string name="daily_frequency">%1$d times per day</string>
     <string name="daily_frequency_with_total">%1$d times per day / %2$d total</string>
     <string name="weekly_frequency">%1$d times per week</string>
