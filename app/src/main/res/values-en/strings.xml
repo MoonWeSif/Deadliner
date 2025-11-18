@@ -273,6 +273,10 @@
     <string name="exclude_specific_dates_with_range_and_existing">Exclude specific dates (optional)&#x0A;Deadline: %1$s&#x0A;Current: %2$s</string>
     <string name="exclude_dates_summary_none">None</string>
     <string name="exclude_dates_summary_days">Excluded %1$d days</string>
+    <string name="current_select_range">Current selection: %1$s</string>
+    <string name="add_exclude_range">Add to excluded dates</string>
+    <string name="deadline_start_label">Start</string>
+    <string name="deadline_end_label">End</string>
     <string name="days_format">%1$d days</string>
     <string name="daily_frequency">%1$d times per day</string>
     <string name="daily_frequency_with_total">%1$d times per day / %2$d total</string>

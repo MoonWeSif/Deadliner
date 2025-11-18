@@ -328,6 +328,10 @@
     <string name="exclude_specific_dates_with_range_and_existing">排除特定日期（可选）&#x0A;Deadline：%1$s&#x0A;已排除：%2$s</string>
     <string name="exclude_dates_summary_none">未选择</string>
     <string name="exclude_dates_summary_days">已排除 %1$d 天</string>
+    <string name="current_select_range">当前选择：%1$s</string>
+    <string name="add_exclude_range">添加到排除日期</string>
+    <string name="deadline_start_label">开始</string>
+    <string name="deadline_end_label">结束</string>
     <string name="days_format">%1$d天</string>
 
     <string name="daily_frequency">每天%1$d次</string>
