@@ -184,9 +184,6 @@
     <string name="start_time">开始时间</string>
     <string name="add_ddl_note">备注</string>
     <string name="exclude_weekdays">排除特定星期几（可选）</string>
-    <string name="exclude_specific_dates">排除特定日期（可选）</string>
-    <string name="exclude_dates_summary_none">未选择</string>
-    <string name="exclude_dates_summary_days">已排除 %1$d 天</string>
     <string name="please_select_time_first">请先设置开始时间和结束时间</string>
     <string name="monday">周一</string>
     <string name="tuesday">周二</string>

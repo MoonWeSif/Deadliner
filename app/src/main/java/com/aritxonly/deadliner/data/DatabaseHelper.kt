@@ -38,6 +38,7 @@ class DatabaseHelper private constructor(context: Context) :
         }
 
         const val DATABASE_NAME = "deadliner.db"
+        // 注意：每次增加新列或结构变更时，务必同步 +1
         private const val DATABASE_VERSION = 14
         private const val TABLE_NAME = "ddl_items"
         private const val COLUMN_ID = "id"
@@ -428,19 +429,25 @@ class DatabaseHelper private constructor(context: Context) :
         val result = mutableListOf<DDLItem>()
         with(cursor) {
             while (moveToNext()) {
-                val excludedWeekdaysStr = getString(getColumnIndexOrThrow(COLUMN_EXCLUDED_WEEKDAYS)) ?: ""
+                // 兼容老版本：如果列不存在，则当作空集合
+                val excludedWeekdaysIndex = getColumnIndex(COLUMN_EXCLUDED_WEEKDAYS)
+                val excludedWeekdaysStr =
+                    if (excludedWeekdaysIndex != -1) getString(excludedWeekdaysIndex) ?: "" else ""
                 val excludedWeekdays = if (excludedWeekdaysStr.isNotEmpty()) {
                     excludedWeekdaysStr.split(",").mapNotNull { it.toIntOrNull() }.toSet()
                 } else {
                     emptySet()
                 }
-                val excludedDatesStr = getString(getColumnIndexOrThrow(COLUMN_EXCLUDED_DATES)) ?: ""
+
+                val excludedDatesIndex = getColumnIndex(COLUMN_EXCLUDED_DATES)
+                val excludedDatesStr =
+                    if (excludedDatesIndex != -1) getString(excludedDatesIndex) ?: "" else ""
                 val excludedDates = if (excludedDatesStr.isNotEmpty()) {
                     excludedDatesStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
                 } else {
                     emptySet()
                 }
-                
+
                 result.add(
                     DDLItem(
                         id = getLong(getColumnIndexOrThrow(COLUMN_ID)),
@@ -453,11 +460,7 @@ class DatabaseHelper private constructor(context: Context) :
                         isArchived = getInt(getColumnIndexOrThrow(COLUMN_IS_ARCHIVED)).toBoolean(),
                         isStared = getInt(getColumnIndexOrThrow(COLUMN_IS_STARED)).toBoolean(),
                         type = DeadlineType.Companion.fromString(
-                            getString(
-                                getColumnIndexOrThrow(
-                                    COLUMN_TYPE
-                                )
-                            )
+                            getString(getColumnIndexOrThrow(COLUMN_TYPE))
                         ),
                         habitCount = getInt(getColumnIndexOrThrow(COLUMN_HABIT_COUNT)),
                         habitTotalCount = getInt(getColumnIndexOrThrow(COLUMN_HABIT_TOTAL_COUNT)),

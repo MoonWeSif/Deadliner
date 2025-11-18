@@ -58,9 +58,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.android.material.tabs.TabLayout
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -105,10 +102,6 @@ class AddDDLActivity : AppCompatActivity() {
     private lateinit var chipFriday: com.google.android.material.chip.Chip
     private lateinit var chipSaturday: com.google.android.material.chip.Chip
     private lateinit var chipSunday: com.google.android.material.chip.Chip
-
-    private lateinit var excludeDatesCard: MaterialCardView
-    private lateinit var excludeDatesSummary: TextView
-    private val excludedDates: MutableSet<String> = mutableSetOf()
 
     private lateinit var excludeDatesCard: MaterialCardView
     private lateinit var excludeDatesSummary: TextView
@@ -174,9 +167,6 @@ class AddDDLActivity : AppCompatActivity() {
         excludeDatesCard = findViewById(R.id.excludeDatesCard)
         excludeDatesSummary = findViewById(R.id.excludeDatesSummary)
 
-        excludeDatesCard = findViewById(R.id.excludeDatesCard)
-        excludeDatesSummary = findViewById(R.id.excludeDatesSummary)
-
         val startTimeContent: TextView = findViewById(R.id.startTimeContent)
         val endTimeContent: TextView = findViewById(R.id.endTimeContent)
 
@@ -200,11 +190,6 @@ class AddDDLActivity : AppCompatActivity() {
                 endTime = selectedTime
                 endTimeContent.text = formatLocalDateTime(endTime!!)
             }
-        }
-
-        // 排除特定日期：使用连续区间选择器，多次选择可叠加
-        excludeDatesCard.setOnClickListener {
-            showExcludeDatesPicker()
         }
 
         // 排除特定日期：使用连续区间选择器，多次选择可叠加
