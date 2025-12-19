@@ -333,6 +333,58 @@ class DatabaseHelper private constructor(context: Context) :
                 }
             }
         }
+
+        // 安全检查：确保 habits 和 habit_records 表存在（兼容二开分支升级）
+        ensureHabitTablesExist(db)
+    }
+
+    /**
+     * 确保 habits 和 habit_records 表存在
+     * 用于兼容从不同版本分支升级的情况
+     */
+    private fun ensureHabitTablesExist(db: SQLiteDatabase) {
+        db.transaction {
+            // 检查并创建 habits 表
+            execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS $TABLE_HABIT (
+                    $HABIT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    $HABIT_DDL_ID INTEGER NOT NULL UNIQUE,
+                    $HABIT_NAME TEXT NOT NULL,
+                    $HABIT_DESC TEXT,
+                    $HABIT_COLOR INTEGER,
+                    $HABIT_ICON_KEY TEXT,
+                    $HABIT_PERIOD TEXT NOT NULL,
+                    $HABIT_TIMES_PER_PERIOD INTEGER NOT NULL DEFAULT 1,
+                    $HABIT_GOAL_TYPE TEXT NOT NULL DEFAULT 'PER_PERIOD',
+                    $HABIT_TOTAL_TARGET INTEGER,
+                    $HABIT_CREATED_AT TEXT NOT NULL,
+                    $HABIT_UPDATED_AT TEXT NOT NULL,
+                    $HABIT_STATUS TEXT NOT NULL DEFAULT 'ACTIVE',
+                    $HABIT_SORT_ORDER INTEGER NOT NULL DEFAULT 0,
+                    $HABIT_ALARM_TIME TEXT,
+                    FOREIGN KEY($HABIT_DDL_ID) REFERENCES $TABLE_NAME($COLUMN_ID) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+
+            // 检查并创建 habit_records 表
+            execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS $TABLE_HABIT_RECORD (
+                    $HR_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    $HR_HABIT_ID INTEGER NOT NULL,
+                    $HR_DATE TEXT NOT NULL,
+                    $HR_COUNT INTEGER NOT NULL DEFAULT 1,
+                    $HR_STATUS TEXT NOT NULL DEFAULT 'COMPLETED',
+                    $HR_CREATED_AT TEXT NOT NULL,
+                    FOREIGN KEY($HR_HABIT_ID) REFERENCES $TABLE_HABIT($HABIT_ID) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+
+            execSQL("CREATE INDEX IF NOT EXISTS idx_hr_habit_date ON $TABLE_HABIT_RECORD($HR_HABIT_ID, $HR_DATE)")
+        }
     }
 
     // region Deadline数据库
